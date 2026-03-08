@@ -1,0 +1,48 @@
+═══════════════════════════════════════════════════════════════════
+    ⚡ أوامر التثبيت السريعة - انسخها واحدة تلو الأخرى
+═══════════════════════════════════════════════════════════════════
+
+# ═══ 1. تثبيت Docker و Docker Compose و Git ═══
+apt update && apt upgrade -y
+curl -fsSL https://get.docker.com | sh
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+apt install -y git ufw
+
+# ═══ 2. استنساخ المشروع ═══
+mkdir -p /opt/textleaf && cd /opt/textleaf
+git clone https://github.com/abood556611/textleave.git .
+
+# ═══ 3. إعداد ملف البيئة ═══
+cp .env.docker .env
+nano .env
+
+# ═══ انسخ والصق في nano (عدّل القيم): ═══
+FLASK_ENV=production
+SECRET_KEY=kf93jd8fh2kjh4f89sdh3kjhf89sdh3f
+APP_URL=http://YOUR_SERVER_IP
+OXAPAY_API_KEY=YOUR_MERCHANT_API_KEY
+WHATSAPP_NUMBER=+963958917677
+MAX_CONTENT_LENGTH=52428800
+
+# اضغط: Ctrl+O ثم Enter (حفظ)
+# اضغط: Ctrl+X (خروج)
+
+# ═══ 4. بناء وتشغيل ═══
+docker-compose build
+docker-compose up -d
+
+# ═══ 5. فتح المنافذ ═══
+ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp
+ufw enable
+
+# ═══ 6. التحقق ═══
+docker-compose ps
+docker-compose logs -f
+
+# ═══ 7. افتح المتصفح ═══
+# http://YOUR_SERVER_IP
+
+═══════════════════════════════════════════════════════════════════
+✅ تم! الموقع الآن يعمل
+═══════════════════════════════════════════════════════════════════
