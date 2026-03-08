@@ -22,7 +22,7 @@ services:
       - ./output:/app/output
       - ./static/backgrounds:/app/static/backgrounds
       - ./static/audio:/app/static/audio
-      - textleaf-db:/app
+      - ./textleaf.db:/app/textleaf.db
     networks:
       - textleaf-network
     healthcheck:
@@ -53,10 +53,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-volumes:
-  textleaf-db:
-    driver: local
 
 networks:
   textleaf-network:
