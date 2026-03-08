@@ -29,10 +29,10 @@ class Config:
     }
     
     # Text settings
-    MAIN_TEXT_FONT_SIZE = 80
-    FILLER_TEXT_FONT_SIZE = 30
-    TEXT_COLOR = (0, 0, 0)  # Black
-    HIGHLIGHTER_COLOR = (255, 255, 153, 200)  # Yellow with transparency
+    MAIN_TEXT_FONT_SIZE = 70
+    FILLER_TEXT_FONT_SIZE = 35
+    TEXT_COLOR = (0, 0, 0)  # Pure black
+    HIGHLIGHTER_COLOR = (255, 255, 0, 100)  # Transparent yellow
     
     # Randomization settings
     POSITION_VARIANCE = 5  # pixels

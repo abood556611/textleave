@@ -122,20 +122,29 @@ class ImageGenerator:
         draw.polygon(points, fill=fill_color)
     
     def _generate_filler_text(self):
-        """Generate random filler text for background"""
+        """Generate realistic article text for background"""
         words = [
-            "Lorem", "ipsum", "dolor", "sit", "amet", "consectetur",
-            "adipiscing", "elit", "sed", "do", "eiusmod", "tempor",
-            "incididunt", "ut", "labore", "et", "dolore", "magna",
-            "aliqua", "Ut", "enim", "ad", "minim", "veniam"
+            "technology", "innovation", "security", "digital", "modern", "industry",
+            "development", "research", "analysis", "systems", "protocols", "networks",
+            "enhanced", "protocols", "data", "patterns", "tracking", "solutions",
+            "comprehensive", "emerging", "strategic", "impact", "progress", "evolution",
+            "fundamental", "principles", "integration", "framework", "methodology", "standards",
+            "infrastructure", "implementation", "optimization", "efficiency", "capabilities",
+            "transforming", "revolutionizing", "advancing", "establishing", "enabling"
         ]
         
-        lines = []
-        for _ in range(15):
-            line = ' '.join(random.choice(words) for _ in range(random.randint(5, 12)))
-            lines.append(line)
+        # Generate full paragraphs that fill the page
+        paragraphs = []
+        for _ in range(8):  # More paragraphs
+            sentences = []
+            for _ in range(random.randint(3, 5)):  # Multiple sentences per paragraph
+                sentence_length = random.randint(8, 15)
+                sentence = ' '.join(random.choice(words) for _ in range(sentence_length))
+                sentence = sentence.capitalize() + '.'
+                sentences.append(sentence)
+            paragraphs.append(' '.join(sentences))
         
-        return lines
+        return paragraphs
     
     def generate_page(self, main_text, page_number, add_watermark=True):
         """Generate a single page with main text and random variations"""
@@ -147,46 +156,101 @@ class ImageGenerator:
         # Create drawing context
         draw = ImageDraw.Draw(img, 'RGBA')
         
-        # Generate and draw filler text (blurred)
-        filler_lines = self._generate_filler_text()
-        y_offset = 50
-        for line in filler_lines:
-            x = random.randint(50, self.width // 4)
-            draw.text((x, y_offset), line, font=self.filler_font, fill=(180, 180, 180, 100))
-            y_offset += 40
+        # Generate full article text that fills the page
+        paragraphs = self._generate_filler_text()
         
-        # Apply slight blur to filler text
-        img = img.filter(ImageFilter.GaussianBlur(radius=0.5))
-        draw = ImageDraw.Draw(img, 'RGBA')
+        # Draw article text across the entire page
+        margin_x = 80
+        margin_y = 100
+        line_height = 45
+        max_width = self.width - (margin_x * 2)
         
-        # Calculate main text position with random offset
-        bbox = draw.textbbox((0, 0), main_text, font=self.font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+        y_offset = margin_y
+        main_text_position = None
         
-        # Center position with random offset
-        base_x = (self.width - text_width) // 2
-        base_y = (self.height - text_height) // 2
+        # Choose random position for main text (middle area)
+        target_y = random.randint(self.height // 3, 2 * self.height // 3)
         
-        # Apply random offset for realism
-        offset_x = random.randint(-Config.POSITION_VARIANCE, Config.POSITION_VARIANCE)
-        offset_y = random.randint(-Config.POSITION_VARIANCE, Config.POSITION_VARIANCE)
-        
-        x = base_x + offset_x
-        y = base_y + offset_y
-        
-        # Draw highlighter rectangle
-        padding = 20
-        highlighter_bbox = (
-            x - padding,
-            y - padding,
-            x + text_width + padding,
-            y + text_height + padding
-        )
-        self._draw_shaky_rectangle(draw, highlighter_bbox, Config.HIGHLIGHTER_COLOR)
-        
-        # Draw main text
-        draw.text((x, y), main_text, font=self.font, fill=Config.TEXT_COLOR)
+        for para_idx, paragraph in enumerate(paragraphs):
+            # Word wrap the paragraph
+            words = paragraph.split()
+            lines = []
+            current_line = []
+            
+            for word in words:
+                test_line = ' '.join(current_line + [word])
+                bbox = draw.textbbox((0, 0), test_line, font=self.filler_font)
+                if bbox[2] - bbox[0] <= max_width:
+                    current_line.append(word)
+                else:
+                    if current_line:
+                        lines.append(' '.join(current_line))
+                    current_line = [word]
+            
+            if current_line:
+                lines.append(' '.join(current_line))
+            
+            # Draw each line
+            for line in lines:
+                # Check if this is where we should place the main text
+                if main_text_position is None and y_offset >= target_y and y_offset < target_y + 200:
+                    # Replace part of this line with main text
+                    words_in_line = line.split()
+                    if len(words_in_line) > 3:
+                        # Insert main text in the middle of the line
+                        insert_pos = len(words_in_line) // 2
+                        before_text = ' '.join(words_in_line[:insert_pos])
+                        after_text = ' '.join(words_in_line[insert_pos + len(main_text.split()):])
+                        
+                        # Draw text before
+                        if before_text:
+                            draw.text((margin_x, y_offset), before_text, font=self.filler_font, fill=(40, 40, 40))
+                            bbox_before = draw.textbbox((0, 0), before_text, font=self.filler_font)
+                            x_offset = margin_x + (bbox_before[2] - bbox_before[0]) + 10
+                        else:
+                            x_offset = margin_x
+                        
+                        # Save main text position for highlighting
+                        main_text_position = (x_offset, y_offset)
+                        
+                        # Draw main text
+                        bbox_main = draw.textbbox((0, 0), main_text, font=self.font)
+                        main_text_width = bbox_main[2] - bbox_main[0]
+                        main_text_height = bbox_main[3] - bbox_main[1]
+                        
+                        # Draw highlighter BEHIND main text (transparent yellow)
+                        padding = 15
+                        highlighter_bbox = (
+                            x_offset - padding,
+                            y_offset - padding,
+                            x_offset + main_text_width + padding,
+                            y_offset + main_text_height + padding
+                        )
+                        self._draw_shaky_rectangle(draw, highlighter_bbox, (255, 255, 0, 100))  # More transparent
+                        
+                        # Draw main text on top (darker, bold)
+                        draw.text((x_offset, y_offset), main_text, font=self.font, fill=(0, 0, 0))  # Pure black
+                        
+                        # Draw text after
+                        if after_text:
+                            x_after = x_offset + main_text_width + 10
+                            draw.text((x_after, y_offset), after_text, font=self.filler_font, fill=(40, 40, 40))
+                        
+                        y_offset += line_height
+                        continue
+                
+                # Draw normal line
+                draw.text((margin_x, y_offset), line, font=self.filler_font, fill=(40, 40, 40))
+                y_offset += line_height
+                
+                if y_offset > self.height - margin_y:
+                    break
+            
+            # Paragraph spacing
+            y_offset += 25
+            
+            if y_offset > self.height - margin_y:
+                break
         
         # Add watermark if required
         if add_watermark:
