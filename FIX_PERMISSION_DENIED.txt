@@ -1,0 +1,141 @@
+═══════════════════════════════════════════════════════════════════
+    🔧 إصلاح خطأ Permission Denied - حل نهائي
+═══════════════════════════════════════════════════════════════════
+
+الخطأ: Permission denied - /app/output/video_xxxxx.mp4
+السبب: مجلدات output و uploads لا تملك صلاحيات كتابة صحيحة
+
+═══════════════════════════════════════════════════════════════════
+✅ الحل الكامل (نفذ الأوامر بالترتيب):
+═══════════════════════════════════════════════════════════════════
+
+# ═══ 1. الانتقال لمجلد المشروع ═══
+cd /opt/textleaf
+
+# ═══ 2. سحب آخر التحديثات من GitHub ═══
+git pull origin main
+
+# ═══ 3. إيقاف الحاويات ═══
+docker-compose down
+
+# ═══ 4. إصلاح صلاحيات المجلدات (مهم جداً!) ═══
+mkdir -p uploads output static/backgrounds static/audio
+sudo chown -R 1000:1000 uploads output static
+sudo chmod -R 777 uploads output static
+
+# ═══ 5. التحقق من الصلاحيات ═══
+ls -la uploads/ output/
+
+# يجب أن تشاهد: drwxrwxrwx
+
+# ═══ 6. إعادة بناء الحاويات ═══
+docker-compose build --no-cache
+
+# ═══ 7. تشغيل المشروع ═══
+docker-compose up -d
+
+# ═══ 8. التحقق من الحالة ═══
+docker-compose ps
+docker-compose logs -f textleaf
+
+# اضغط Ctrl+C للخروج
+
+═══════════════════════════════════════════════════════════════════
+⚡ اختصار سريع (نسخ/لصق كتلة واحدة):
+═══════════════════════════════════════════════════════════════════
+
+cd /opt/textleaf && \
+git pull origin main && \
+docker-compose down && \
+mkdir -p uploads output static/backgrounds static/audio && \
+sudo chown -R 1000:1000 uploads output static && \
+sudo chmod -R 777 uploads output static && \
+docker-compose build --no-cache && \
+docker-compose up -d && \
+echo "✅ تم الإصلاح! اختبر الموقع الآن"
+
+═══════════════════════════════════════════════════════════════════
+🔍 ما تم إصلاحه في الكود:
+═══════════════════════════════════════════════════════════════════
+
+✅ تغيير صلاحيات المجلدات من 755 → 777
+✅ فحص صلاحيات الكتابة قبل إنشاء الفيديو
+✅ إنشاء المجلدات تلقائياً إذا لم تكن موجودة
+✅ معالجة أخطاء الصلاحيات بشكل أفضل
+✅ إضافة سكريبت fix-permissions.sh
+
+═══════════════════════════════════════════════════════════════════
+🧪 اختبار الإصلاح:
+═══════════════════════════════════════════════════════════════════
+
+1. افتح المتصفح: http://195.35.43.121
+
+2. جرب إنشاء فيديو:
+   - النص: Test Video
+   - المدة: 5 ثواني
+   - FPS: 30
+   - النسبة: 9:16
+
+3. انتظر حتى يكتمل
+
+4. إذا نجح → ✅ تم الإصلاح!
+   إذا فشل → أرسل لي:
+   docker-compose logs textleaf | tail -50
+
+═══════════════════════════════════════════════════════════════════
+🆘 حل المشاكل الإضافية:
+═══════════════════════════════════════════════════════════════════
+
+# إذا استمر خطأ Permission Denied:
+
+# 1. تحقق من الصلاحيات داخل الحاوية
+docker-compose exec textleaf ls -la /app/output/
+docker-compose exec textleaf whoami
+
+# 2. إعادة ضبط كاملة للصلاحيات
+cd /opt/textleaf
+sudo rm -rf uploads output
+mkdir -p uploads output
+sudo chown -R 1000:1000 uploads output
+sudo chmod -R 777 uploads output
+docker-compose restart
+
+# 3. تنظيف Docker كامل (الحل النووي!)
+docker-compose down -v
+docker system prune -a -f
+rm -rf uploads output
+mkdir -p uploads output
+sudo chmod -R 777 uploads output
+docker-compose build --no-cache
+docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════
+📊 التحقق من حالة النظام:
+═══════════════════════════════════════════════════════════════════
+
+# حجم المجلدات
+du -sh uploads/ output/
+
+# الصلاحيات الحالية
+ls -lah uploads/ output/
+
+# حالة الحاويات
+docker-compose ps
+
+# السجلات
+docker-compose logs --tail=100 textleaf
+
+# استخدام الذاكرة
+docker stats --no-stream
+
+═══════════════════════════════════════════════════════════════════
+✅ التحديث: 2026-03-08 - إصلاح Permission Denied
+═══════════════════════════════════════════════════════════════════
+
+الملفات المحدثة:
+- Dockerfile (صلاحيات 777)
+- config.py (فحص الصلاحيات)
+- video_generator.py (فحص قبل الكتابة)
+- fix-permissions.sh (سكريبت الإصلاح)
+
+═══════════════════════════════════════════════════════════════════
