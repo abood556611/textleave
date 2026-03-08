@@ -119,8 +119,12 @@ def generate_video():
             video_progress[video_id]['output_path'] = output_path
             
         except Exception as e:
+            import traceback
+            error_detail = f"{str(e)}\n{traceback.format_exc()}"
+            print(f"Video generation error: {error_detail}")
             video_progress[video_id]['status'] = 'error'
             video_progress[video_id]['error'] = str(e)
+            video_progress[video_id]['error_detail'] = error_detail
         
         finally:
             # Clean up uploaded audio file
