@@ -1,0 +1,17 @@
+*.pyc
+__pycache__/
+venv/
+env/
+.env
+*.log
+uploads/*
+!uploads/.gitkeep
+output/*
+!output/.gitkeep
+.DS_Store
+*.mp4
+*.avi
+*.mov
+*.tmp
+.idea/
+.vscode/

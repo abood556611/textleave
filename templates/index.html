@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextLeaf - محرك فيديوهات Match Cut</title>
+    <meta name="description" content="أنشئ فيديوهات Match Cut احترافية تحاكي تقليب صفحات المجلات">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-leaf"></i>
+                <span>TextLeaf</span>
+            </div>
+            <nav class="nav">
+                <a href="#features">المميزات</a>
+                <a href="#pricing">الأسعار</a>
+                <a href="#support" class="btn-support">
+                    <i class="fab fa-whatsapp"></i>
+                    الدعم
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>أنشئ فيديوهات Match Cut احترافية</h1>
+            <p class="subtitle">تحاكي تقليب صفحات المجلات بسرعة - واقعية وغير مملة</p>
+        </div>
+    </section>
+
+    <!-- Video Generator -->
+    <section class="generator">
+        <div class="container">
+            <div class="generator-card">
+                <h2>مولد الفيديو</h2>
+                
+                <form id="videoForm">
+                    <!-- Main Text Input -->
+                    <div class="form-group">
+                        <label for="mainText">
+                            <i class="fas fa-text-width"></i>
+                            النص الرئيسي
+                        </label>
+                        <input 
+                            type="text" 
+                            id="mainText" 
+                            name="main_text" 
+                            placeholder="اكتب النص الذي تريد عرضه"
+                            required
+                            maxlength="100"
+                        >
+                        <small>سيظهر هذا النص في كل صفحة مع تنويعات طفيفة</small>
+                    </div>
+
+                    <!-- Duration Selection -->
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-clock"></i>
+                            المدة
+                        </label>
+                        <div class="button-group">
+                            {% for duration in config.durations %}
+                            <button 
+                                type="button" 
+                                class="btn-option {% if duration == 10 %}active{% endif %}"
+                                data-duration="{{ duration }}"
+                            >
+                                {{ duration }} ثانية
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="duration" name="duration" value="10">
+                        <div id="videoInfo" class="video-info">
+                            <span>عدد الصفحات: <strong id="pageCount">20</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- FPS Selection -->
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-video"></i>
+                            معدل الإطارات (FPS)
+                        </label>
+                        <div class="button-group">
+                            {% for fps in config.fps_options %}
+                            <button 
+                                type="button" 
+                                class="btn-option {% if fps == 30 %}active{% endif %}"
+                                data-fps="{{ fps }}"
+                            >
+                                {{ fps }} FPS
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="fps" name="fps" value="30">
+                    </div>
+
+                    <!-- Resolution Selection -->
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-expand"></i>
+                            الأبعاد
+                        </label>
+                        <div class="button-group">
+                            {% for resolution in config.resolutions %}
+                            <button 
+                                type="button" 
+                                class="btn-option {% if resolution == '9:16' %}active{% endif %}"
+                                data-resolution="{{ resolution }}"
+                            >
+                                {{ resolution }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="resolution" name="resolution" value="9:16">
+                    </div>
+
+                    <!-- Audio Upload -->
+                    <div class="form-group">
+                        <label for="audioFile">
+                            <i class="fas fa-music"></i>
+                            ملف الصوت (اختياري)
+                        </label>
+                        <div class="file-upload">
+                            <input 
+                                type="file" 
+                                id="audioFile" 
+                                name="audio_file"
+                                accept="audio/*"
+                            >
+                            <label for="audioFile" class="file-label">
+                                <i class="fas fa-upload"></i>
+                                <span id="fileName">اختر ملف صوتي</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Premium Toggle -->
+                    <div class="form-group premium-toggle">
+                        <label class="switch-label">
+                            <input type="checkbox" id="premiumToggle" name="premium">
+                            <span class="switch"></span>
+                            <span class="label-text">
+                                <i class="fas fa-crown"></i>
+                                وضع Premium (بدون علامة مائية، 1080p)
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-generate" id="generateBtn">
+                        <i class="fas fa-magic"></i>
+                        توليد الفيديو
+                    </button>
+                </form>
+
+                <!-- Progress Bar -->
+                <div id="progressContainer" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">جاري التحضير...</p>
+                </div>
+
+                <!-- Download Section -->
+                <div id="downloadContainer" class="download-container" style="display: none;">
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>تم توليد الفيديو بنجاح!</h3>
+                    </div>
+                    <button id="downloadBtn" class="btn-download">
+                        <i class="fas fa-download"></i>
+                        تحميل الفيديو
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>المميزات</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-bolt"></i>
+                    <h3>سريع وفعال</h3>
+                    <p>توليد الفيديو خلال دقائق</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-palette"></i>
+                    <h3>واقعي ومتنوع</h3>
+                    <p>خلفيات ونصوص متنوعة لكل صفحة</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-cog"></i>
+                    <h3>قابل للتخصيص</h3>
+                    <p>تحكم كامل بالمدة والجودة والأبعاد</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-hd-video"></i>
+                    <h3>جودة عالية</h3>
+                    <p>دقة 1080p للمشتركين</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2>الأسعار</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>مجاني</h3>
+                    <div class="price">$0</div>
+                    <ul>
+                        <li><i class="fas fa-check"></i> علامة مائية</li>
+                        <li><i class="fas fa-check"></i> دقة 720p</li>
+                        <li><i class="fas fa-check"></i> جميع المدد والأبعاد</li>
+                    </ul>
+                    <button class="btn-pricing">ابدأ الآن</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="badge">الأكثر شعبية</div>
+                    <h3>شهري</h3>
+                    <div class="price">${{ config.monthly_price }}</div>
+                    <ul>
+                        <li><i class="fas fa-check"></i> بدون علامة مائية</li>
+                        <li><i class="fas fa-check"></i> دقة 1080p</li>
+                        <li><i class="fas fa-check"></i> خيار Green Screen</li>
+                        <li><i class="fas fa-check"></i> أولوية المعالجة</li>
+                    </ul>
+                    <button class="btn-pricing btn-primary" onclick="subscribePlan('monthly')">اشترك الآن</button>
+                </div>
+                <div class="pricing-card">
+                    <div class="badge badge-success">وفر 17%</div>
+                    <h3>سنوي</h3>
+                    <div class="price">${{ config.yearly_price }}</div>
+                    <ul>
+                        <li><i class="fas fa-check"></i> كل مميزات الشهري</li>
+                        <li><i class="fas fa-check"></i> وفر $10 سنوياً</li>
+                        <li><i class="fas fa-check"></i> دعم أولوية</li>
+                    </ul>
+                    <button class="btn-pricing" onclick="subscribePlan('yearly')">اشترك الآن</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="support" class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TextLeaf</h3>
+                    <p>محرك فيديوهات Match Cut الاحترافي</p>
+                </div>
+                <div class="footer-section">
+                    <h3>الدعم</h3>
+                    <a href="https://wa.me/{{ config.whatsapp }}" class="whatsapp-link" target="_blank">
+                        <i class="fab fa-whatsapp"></i>
+                        {{ config.whatsapp }}
+                    </a>
+                </div>
+                <div class="footer-section">
+                    <h3>الدفع</h3>
+                    <p>نقبل USDT عبر OxaPay</p>
+                    <small>BSC, TRX, ETH</small>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 TextLeaf. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
