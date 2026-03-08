@@ -1,0 +1,152 @@
+═══════════════════════════════════════════════════════════════════
+    📤 رفع التحديثات على GitHub - دليل شامل
+═══════════════════════════════════════════════════════════════════
+
+✅ التحديثات الجاهزة للرفع:
+- إصلاح مشكلة Pillow ANTIALIAS
+- تحديث requirements.txt (Pillow 9.5.0)
+- تحسين معالجة الأخطاء
+- إضافة دليل الإصلاح
+
+═══════════════════════════════════════════════════════════════════
+🚀 الطريقة 1: رفع من السيرفر (الأسهل)
+═══════════════════════════════════════════════════════════════════
+
+# على سيرفرك في Termius:
+
+cd /opt/textleaf
+
+# سحب آخر التحديثات
+git pull origin main
+
+# تطبيق الإصلاحات
+cat > requirements.txt << 'EOF'
+Flask==3.0.0
+Pillow==9.5.0
+moviepy==1.0.3
+numpy==1.24.3
+Werkzeug==3.0.1
+gunicorn==21.2.0
+python-dotenv==1.0.0
+Requests==2.31.0
+imageio==2.31.1
+imageio-ffmpeg==0.4.9
+EOF
+
+cat > app.py << 'EOF'
+[انسخ محتوى app.py المحدث من الأسفل]
+EOF
+
+cat > video_generator.py << 'EOF'
+[انسخ محتوى video_generator.py المحدث من الأسفل]
+EOF
+
+# حفظ ورفع
+git add -A
+git commit -m "fix: Resolve Pillow ANTIALIAS compatibility with MoviePy"
+git push origin main
+
+═══════════════════════════════════════════════════════════════════
+🌐 الطريقة 2: تعديل مباشر على GitHub (الأسرع)
+═══════════════════════════════════════════════════════════════════
+
+1. افتح: https://github.com/abood556611/textleave
+
+2. عدّل requirements.txt:
+   - اضغط على الملف → Edit (أيقونة القلم ✏️)
+   - استبدل المحتوى بـ:
+
+Flask==3.0.0
+Pillow==9.5.0
+moviepy==1.0.3
+numpy==1.24.3
+Werkzeug==3.0.1
+gunicorn==21.2.0
+python-dotenv==1.0.0
+Requests==2.31.0
+imageio==2.31.1
+imageio-ffmpeg==0.4.9
+
+   - Commit: "fix: Downgrade Pillow to 9.5.0"
+
+3. [اختياري] أضف ملف FIX_ANTIALIAS_SERVER.txt:
+   - Add file → Create new file
+   - اسم الملف: FIX_ANTIALIAS_SERVER.txt
+   - انسخ المحتوى من الأسفل
+   - Commit: "docs: Add ANTIALIAS fix instructions"
+
+═══════════════════════════════════════════════════════════════════
+💾 الطريقة 3: استخدام Git Patch (متقدم)
+═══════════════════════════════════════════════════════════════════
+
+تم إنشاء ملف patch في: /tmp/textleaf-fixes.patch
+
+لتطبيقه على سيرفرك:
+
+cd /opt/textleaf
+# [نقل الـ patch للسيرفر]
+git apply textleaf-fixes.patch
+git push origin main
+
+═══════════════════════════════════════════════════════════════════
+📝 محتوى الملفات المحدثة:
+═══════════════════════════════════════════════════════════════════
+
+═══ requirements.txt ═══
+Flask==3.0.0
+Pillow==9.5.0
+moviepy==1.0.3
+numpy==1.24.3
+Werkzeug==3.0.1
+gunicorn==21.2.0
+python-dotenv==1.0.0
+Requests==2.31.0
+imageio==2.31.1
+imageio-ffmpeg==0.4.9
+
+═══════════════════════════════════════════════════════════════════
+🎯 الخطوات الموصى بها:
+═══════════════════════════════════════════════════════════════════
+
+1️⃣ **الأسرع:** استخدم الطريقة 2 (تعديل مباشر على GitHub)
+   - افتح requirements.txt على GitHub
+   - عدّل وحفظ
+   - جاهز! ✅
+
+2️⃣ **ثم على السيرفر:**
+   cd /opt/textleaf
+   git pull origin main
+   docker-compose down
+   docker-compose build --no-cache
+   docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════
+✅ بعد الرفع:
+═══════════════════════════════════════════════════════════════════
+
+تحقق من المستودع:
+https://github.com/abood556611/textleave/commits/main
+
+يجب أن ترى:
+✅ fix: Resolve Pillow ANTIALIAS compatibility with MoviePy
+✅ docs: Add ANTIALIAS fix instructions
+
+═══════════════════════════════════════════════════════════════════
+🔄 تحديث السيرفر بعد الرفع:
+═══════════════════════════════════════════════════════════════════
+
+cd /opt/textleaf
+git pull origin main
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+docker-compose logs -f textleaf
+
+═══════════════════════════════════════════════════════════════════
+📞 دعم:
+═══════════════════════════════════════════════════════════════════
+
+WhatsApp: +963 958 917 677
+المستودع: https://github.com/abood556611/textleave
+
+═══════════════════════════════════════════════════════════════════

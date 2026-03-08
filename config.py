@@ -55,5 +55,12 @@ class Config:
     def init_app(app):
         """Initialize application with config"""
         # Create necessary directories
-        os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-        os.makedirs(Config.OUTPUT_FOLDER, exist_ok=True)
+        try:
+            os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+            os.makedirs(Config.OUTPUT_FOLDER, exist_ok=True)
+            
+            # Ensure directories are writable
+            os.chmod(Config.UPLOAD_FOLDER, 0o777)
+            os.chmod(Config.OUTPUT_FOLDER, 0o777)
+        except Exception as e:
+            print(f"Warning: Could not set directory permissions: {e}")

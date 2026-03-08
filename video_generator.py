@@ -110,6 +110,15 @@ class VideoGenerator:
             if progress_callback:
                 progress_callback(80, "Rendering video...")
             
+            # Ensure output directory exists and is writable
+            output_dir = os.path.dirname(output_path)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir, mode=0o777, exist_ok=True)
+            
+            # Check if directory is writable
+            if not os.access(output_dir, os.W_OK):
+                raise PermissionError(f"Output directory is not writable: {output_dir}")
+            
             # Determine video quality based on watermark
             if self.add_watermark:
                 # Free tier: 720p

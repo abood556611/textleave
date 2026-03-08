@@ -57,7 +57,7 @@ COPY --chown=appuser:appuser . .
 # Create necessary directories with proper permissions
 RUN mkdir -p uploads output static/backgrounds static/audio && \
     chown -R appuser:appuser uploads output static && \
-    chmod -R 755 uploads output static
+    chmod -R 777 uploads output static
 
 # Switch to non-root user
 USER appuser
