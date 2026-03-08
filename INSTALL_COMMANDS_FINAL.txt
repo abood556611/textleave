@@ -1,0 +1,290 @@
+═══════════════════════════════════════════════════════════════════
+    🚀 أوامر تثبيت TextLeaf على Hostinger VPS - النسخة النهائية
+═══════════════════════════════════════════════════════════════════
+
+المستودع: https://github.com/abood556611/textleave
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 1: تثبيت Docker
+═══════════════════════════════════════════════════════════════════
+
+# تحديث النظام
+apt update && apt upgrade -y
+
+# تنزيل وتثبيت Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+rm get-docker.sh
+
+# التحقق من التثبيت
+docker --version
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 2: تثبيت Docker Compose
+═══════════════════════════════════════════════════════════════════
+
+# تنزيل Docker Compose
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+# إعطاء صلاحيات التنفيذ
+chmod +x /usr/local/bin/docker-compose
+
+# التحقق من التثبيت
+docker-compose --version
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 3: تثبيت Git واستنساخ المشروع
+═══════════════════════════════════════════════════════════════════
+
+# تثبيت Git
+apt install -y git
+
+# إنشاء مجلد المشروع
+mkdir -p /opt/textleaf
+cd /opt/textleaf
+
+# استنساخ المشروع
+git clone https://github.com/abood556611/textleave.git .
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 4: إعداد ملف البيئة (.env)
+═══════════════════════════════════════════════════════════════════
+
+# نسخ ملف المثال
+cp .env.docker .env
+
+# تعديل ملف .env
+nano .env
+
+# ══════════ انسخ والصق المحتوى التالي (عدّل القيم) ══════════
+
+FLASK_ENV=production
+SECRET_KEY=kf93jd8fh2kjh4f89sdh3kjhf89sdh3f
+APP_URL=http://YOUR_SERVER_IP
+OXAPAY_API_KEY=YOUR_MERCHANT_API_KEY_HERE
+WHATSAPP_NUMBER=+963958917677
+MAX_CONTENT_LENGTH=52428800
+
+# ══════════════════════════════════════════════════════════════════
+
+# 🔴 مهم جداً: استبدل التالي:
+# YOUR_SERVER_IP  ←  IP السيرفر الحقيقي (مثال: 185.123.45.67)
+# YOUR_MERCHANT_API_KEY_HERE  ←  Merchant API Key من OxaPay
+
+# حفظ والخروج:
+# اضغط: Ctrl+O ثم Enter (حفظ)
+# اضغط: Ctrl+X (خروج)
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 5: بناء وتشغيل المشروع
+═══════════════════════════════════════════════════════════════════
+
+# بناء الصور (يستغرق 5-10 دقائق)
+docker-compose build
+
+# تشغيل المشروع
+docker-compose up -d
+
+# التحقق من الحالة
+docker-compose ps
+
+# يجب أن تشاهد:
+# textleaf_web      Up
+# textleaf_nginx    Up
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 6: التحقق من التشغيل
+═══════════════════════════════════════════════════════════════════
+
+# عرض السجلات (Logs)
+docker-compose logs -f
+
+# اضغط Ctrl+C للخروج من السجلات
+
+# اختبار الموقع
+curl http://localhost:8000/
+
+# إذا ظهر HTML، فالموقع يعمل! ✅
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 7: فتح المنافذ (Firewall)
+═══════════════════════════════════════════════════════════════════
+
+# تثبيت UFW Firewall
+apt install -y ufw
+
+# السماح بالمنافذ الضرورية
+ufw allow 22/tcp     # SSH
+ufw allow 80/tcp     # HTTP
+ufw allow 443/tcp    # HTTPS
+
+# تفعيل Firewall
+ufw enable
+
+# التحقق من الحالة
+ufw status
+
+═══════════════════════════════════════════════════════════════════
+📋 الخطوة 8: الوصول للموقع
+═══════════════════════════════════════════════════════════════════
+
+افتح المتصفح:
+http://YOUR_SERVER_IP
+
+أو إذا عندك دومين:
+http://your-domain.com
+
+═══════════════════════════════════════════════════════════════════
+🔐 الخطوة 9 (اختيارية): تثبيت SSL/HTTPS
+═══════════════════════════════════════════════════════════════════
+
+# تثبيت Certbot
+apt install -y certbot
+
+# إيقاف Nginx مؤقتاً
+docker-compose stop nginx
+
+# الحصول على شهادة SSL (استبدل your-domain.com)
+certbot certonly --standalone -d your-domain.com -d www.your-domain.com
+
+# الشهادات ستُحفظ في:
+# /etc/letsencrypt/live/your-domain.com/fullchain.pem
+# /etc/letsencrypt/live/your-domain.com/privkey.pem
+
+# نسخ الشهادات
+mkdir -p /opt/textleaf/ssl
+cp /etc/letsencrypt/live/your-domain.com/fullchain.pem /opt/textleaf/ssl/
+cp /etc/letsencrypt/live/your-domain.com/privkey.pem /opt/textleaf/ssl/
+
+# تعديل nginx.conf لتفعيل HTTPS
+nano /opt/textleaf/nginx.conf
+
+# (اتبع التعليمات في الملف)
+
+# إعادة تشغيل Nginx
+docker-compose up -d nginx
+
+═══════════════════════════════════════════════════════════════════
+⚙️ أوامر الإدارة اليومية
+═══════════════════════════════════════════════════════════════════
+
+# تشغيل المشروع
+docker-compose up -d
+
+# إيقاف المشروع
+docker-compose down
+
+# إعادة تشغيل
+docker-compose restart
+
+# عرض الحالة
+docker-compose ps
+
+# عرض السجلات
+docker-compose logs -f
+
+# عرض آخر 100 سطر من السجلات
+docker-compose logs --tail=100
+
+# تحديث المشروع (بعد تعديلات GitHub)
+cd /opt/textleaf
+git pull
+docker-compose build
+docker-compose up -d
+
+# عرض استهلاك الموارد
+docker stats
+
+# تنظيف Docker (احذر!)
+docker system prune -a
+
+═══════════════════════════════════════════════════════════════════
+🔧 حل المشاكل الشائعة
+═══════════════════════════════════════════════════════════════════
+
+1. المشكلة: "port 8000 already in use"
+   الحل:
+   lsof -ti:8000 | xargs kill -9
+   docker-compose up -d
+
+2. المشكلة: Container يتوقف باستمرار
+   الحل:
+   docker-compose logs textleaf
+   # راجع الأخطاء وعدّل .env
+
+3. المشكلة: لا أستطيع الوصول للموقع
+   الحل:
+   # تحقق من Firewall
+   ufw status
+   # تحقق من Docker
+   docker-compose ps
+   # تحقق من Nginx
+   docker-compose logs nginx
+
+4. إعادة بناء كاملة (احذر!)
+   docker-compose down
+   docker system prune -a -f
+   docker-compose build --no-cache
+   docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════
+📊 مراقبة الأداء
+═══════════════════════════════════════════════════════════════════
+
+# استهلاك الموارد الحالي
+docker stats
+
+# مساحة القرص المستخدمة
+docker system df
+
+# قائمة جميع الـ Containers
+docker ps -a
+
+# قائمة الصور
+docker images
+
+═══════════════════════════════════════════════════════════════════
+📝 ملاحظات مهمة
+═══════════════════════════════════════════════════════════════════
+
+✅ المشروع جاهز للإنتاج
+✅ يدعم Docker و Docker Compose
+✅ OxaPay مُحدَّث ويحتاج فقط Merchant API Key
+✅ لا تحتاج MERCHANT_ID بعد الآن
+
+🔴 تذكر:
+- استبدل YOUR_SERVER_IP بـ IP الحقيقي
+- استبدل YOUR_MERCHANT_API_KEY_HERE بمفتاح OxaPay
+- غيّر SECRET_KEY في .env (استخدم: openssl rand -hex 32)
+- احتفظ بنسخة احتياطية من .env
+
+═══════════════════════════════════════════════════════════════════
+📞 الدعم
+═══════════════════════════════════════════════════════════════════
+
+WhatsApp: +963 958 917 677
+GitHub: https://github.com/abood556611/textleave
+الوثائق: /opt/textleaf/DOCKER_DEPLOY.md
+
+═══════════════════════════════════════════════════════════════════
+✨ اختصار التثبيت السريع (نسخ/لصق واحد)
+═══════════════════════════════════════════════════════════════════
+
+apt update && apt upgrade -y && \
+curl -fsSL https://get.docker.com | sh && \
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
+chmod +x /usr/local/bin/docker-compose && \
+apt install -y git ufw && \
+mkdir -p /opt/textleaf && \
+cd /opt/textleaf && \
+git clone https://github.com/abood556611/textleave.git . && \
+cp .env.docker .env && \
+echo "✅ تم تثبيت المتطلبات! الآن عدّل ملف .env بالأمر: nano .env"
+
+# بعد تعديل .env:
+docker-compose build && docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════
+🎉 تم التحديث: 2026-03-08
+✅ نسخة محدثة - لا تحتاج MERCHANT_ID
+═══════════════════════════════════════════════════════════════════
