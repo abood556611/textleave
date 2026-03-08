@@ -6,13 +6,14 @@ from werkzeug.utils import secure_filename
 from config import Config
 from video_generator import create_video, VideoGenerator
 from oxapay_service import create_payment_session, verify_payment_session
+from database import db
 import threading
 
 app = Flask(__name__)
 app.config.from_object(Config)
 Config.init_app(app)
 
-# Store video generation progress
+# Store video generation progress (in-memory cache + database)
 video_progress = {}
 
 
@@ -83,6 +84,19 @@ def generate_video():
     video_id = uuid.uuid4().hex
     output_filename = f"video_{video_id}.mp4"
     
+    # Save to database
+    try:
+        db.create_video(
+            video_id=video_id,
+            main_text=main_text,
+            duration=duration,
+            fps=fps,
+            resolution=resolution,
+            is_premium=is_premium
+        )
+    except Exception as e:
+        print(f"Database error: {e}")
+    
     # Initialize progress
     video_progress[video_id] = {
         'progress': 0,
@@ -118,6 +132,12 @@ def generate_video():
             video_progress[video_id]['progress'] = 100
             video_progress[video_id]['output_path'] = output_path
             
+            # Update database
+            try:
+                db.update_video_status(video_id, 'complete', output_path)
+            except Exception as e:
+                print(f"Database update error: {e}")
+            
         except Exception as e:
             import traceback
             error_detail = f"{str(e)}\n{traceback.format_exc()}"
@@ -125,6 +145,12 @@ def generate_video():
             video_progress[video_id]['status'] = 'error'
             video_progress[video_id]['error'] = str(e)
             video_progress[video_id]['error_detail'] = error_detail
+            
+            # Update database
+            try:
+                db.update_video_status(video_id, 'error')
+            except Exception as e:
+                print(f"Database update error: {e}")
         
         finally:
             # Clean up uploaded audio file
@@ -148,19 +174,42 @@ def generate_video():
 @app.route('/api/progress/<video_id>', methods=['GET'])
 def get_progress(video_id):
     """Get video generation progress"""
-    if video_id not in video_progress:
+    # Check in-memory cache first
+    if video_id in video_progress:
+        return jsonify(video_progress[video_id])
+    
+    # Check database
+    video_record = db.get_video(video_id)
+    if not video_record:
         return jsonify({'error': 'Video ID not found'}), 404
     
-    return jsonify(video_progress[video_id])
+    # Reconstruct progress from database
+    status = video_record['status']
+    return jsonify({
+        'progress': 100 if status == 'complete' else 0,
+        'status': status,
+        'filename': f"video_{video_id}.mp4",
+        'output_path': video_record.get('file_path')
+    })
 
 
 @app.route('/api/download/<video_id>', methods=['GET'])
 def download_video(video_id):
     """Download generated video"""
-    if video_id not in video_progress:
-        return jsonify({'error': 'Video ID not found'}), 404
+    # Check in-memory cache first
+    progress_info = video_progress.get(video_id)
     
-    progress_info = video_progress[video_id]
+    # If not in cache, check database
+    if not progress_info:
+        video_record = db.get_video(video_id)
+        if not video_record:
+            return jsonify({'error': 'Video ID not found'}), 404
+        
+        progress_info = {
+            'status': video_record['status'],
+            'output_path': video_record.get('file_path'),
+            'filename': f"video_{video_id}.mp4"
+        }
     
     if progress_info['status'] != 'complete':
         return jsonify({'error': 'Video not ready yet'}), 400
