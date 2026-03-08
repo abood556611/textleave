@@ -6,11 +6,10 @@ from config import Config
 class OxaPayService:
     """Service for handling OxaPay cryptocurrency payments"""
     
-    BASE_URL = "https://api.oxapay.com"
+    BASE_URL = "https://api.oxapay.com/v1"
     
     def __init__(self):
-        self.api_key = Config.OXAPAY_API_KEY
-        self.merchant_id = os.getenv('OXAPAY_MERCHANT_ID', '')
+        self.merchant_api_key = Config.OXAPAY_API_KEY
     
     def create_invoice(self, amount, currency='USD', order_id=None, description=None):
         """
@@ -26,27 +25,27 @@ class OxaPayService:
             dict with invoice data including payment URL
         """
         
-        endpoint = f"{self.BASE_URL}/merchants/request"
+        endpoint = f"{self.BASE_URL}/payment/invoice"
         
         payload = {
-            'merchant': self.merchant_id,
             'amount': amount,
             'currency': currency,
-            'lifeTime': 30,  # Invoice lifetime in minutes
-            'feePaidByPayer': 0,  # 0 = merchant pays, 1 = customer pays
-            'underPaidCover': 2,  # Percentage allowed for underpayment
-            'callbackUrl': f"{os.getenv('APP_URL', 'http://localhost:5000')}/api/payment/callback",
-            'returnUrl': f"{os.getenv('APP_URL', 'http://localhost:5000')}/payment/success",
+            'lifetime': 30,  # Invoice lifetime in minutes
+            'fee_paid_by_payer': 0,  # 0 = merchant pays, 1 = customer pays
+            'under_paid_coverage': 2,  # Percentage allowed for underpayment
+            'callback_url': f"{os.getenv('APP_URL', 'http://localhost:5000')}/api/payment/callback",
+            'return_url': f"{os.getenv('APP_URL', 'http://localhost:5000')}/payment/success",
         }
         
         if order_id:
-            payload['orderId'] = order_id
+            payload['order_id'] = order_id
         
         if description:
             payload['description'] = description
         
         headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'merchant_api_key': self.merchant_api_key
         }
         
         try:
@@ -68,15 +67,15 @@ class OxaPayService:
             dict with payment status
         """
         
-        endpoint = f"{self.BASE_URL}/merchants/inquiry"
+        endpoint = f"{self.BASE_URL}/payment/info"
         
         payload = {
-            'merchant': self.merchant_id,
-            'trackId': track_id
+            'track_id': track_id
         }
         
         headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'merchant_api_key': self.merchant_api_key
         }
         
         try:
@@ -129,14 +128,15 @@ def create_payment_session(plan_type='monthly', user_id=None):
     # Create invoice
     invoice = service.create_subscription_invoice(plan_type)
     
-    if invoice and invoice.get('result') == 100:
+    if invoice and invoice.get('status') == 200:
+        data = invoice.get('data', {})
         return {
             'success': True,
-            'payment_id': invoice.get('trackId'),
-            'payment_url': invoice.get('payLink'),
+            'payment_id': data.get('track_id'),
+            'payment_url': data.get('payment_url'),
             'amount': Config.MONTHLY_PRICE if plan_type == 'monthly' else Config.YEARLY_PRICE,
             'currency': 'USD',
-            'expires_at': invoice.get('expiredAt')
+            'expires_at': data.get('expired_at')
         }
     
     return {
@@ -159,14 +159,15 @@ def verify_payment_session(track_id):
     service = OxaPayService()
     result = service.verify_payment(track_id)
     
-    if result and result.get('result') == 100:
-        status = result.get('status')
+    if result and result.get('status') == 200:
+        data = result.get('data', {})
+        status = data.get('status')
         
         return {
             'verified': status == 'Paid',
             'status': status,
-            'amount': result.get('amount'),
-            'currency': result.get('currency')
+            'amount': data.get('amount'),
+            'currency': data.get('currency')
         }
     
     return {
