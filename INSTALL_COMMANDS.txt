@@ -1,0 +1,224 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║              🐳 أوامر تثبيت TextLeaf عبر Docker                         ║
+║                     على Hostinger VPS                                   ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+
+📋 الطريقة الأولى: التثبيت التلقائي الكامل
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+على جهازك المحلي:
+-----------------
+scp -r /home/user/webapp root@YOUR_SERVER_IP:/tmp/textleaf
+
+
+على السيرفر:
+------------
+ssh root@YOUR_SERVER_IP
+mv /tmp/textleaf /opt/textleaf
+cd /opt/textleaf
+bash docker-deploy-auto.sh
+
+
+✅ هذا كل شيء! السكريبت سيقوم بكل شيء تلقائياً.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📋 الطريقة الثانية: التثبيت اليدوي خطوة بخطوة
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. الاتصال بالسيرفر:
+ssh root@YOUR_SERVER_IP
+
+
+2. تثبيت Docker:
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+
+3. تثبيت Docker Compose:
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+
+4. إنشاء مجلد المشروع:
+mkdir -p /opt/textleaf
+cd /opt/textleaf
+
+
+5. نقل الملفات (من جهازك المحلي):
+scp -r /home/user/webapp/* root@YOUR_SERVER_IP:/opt/textleaf/
+
+
+6. إعداد البيئة:
+cd /opt/textleaf
+cp .env.docker .env
+nano .env
+# عدّل: SECRET_KEY, APP_URL, OXAPAY_API_KEY, إلخ
+
+
+7. بناء وتشغيل:
+docker-compose build
+docker-compose up -d
+
+
+8. التحقق:
+docker-compose ps
+docker-compose logs -f
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🔒 إضافة SSL (Let's Encrypt)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+apt install -y certbot
+cd /opt/textleaf
+docker-compose stop nginx
+certbot certonly --standalone -d YOUR_DOMAIN.com -d www.YOUR_DOMAIN.com
+mkdir -p ssl
+cp /etc/letsencrypt/live/YOUR_DOMAIN.com/fullchain.pem ssl/
+cp /etc/letsencrypt/live/YOUR_DOMAIN.com/privkey.pem ssl/
+nano nginx.conf  # أزل التعليق من قسم HTTPS
+docker-compose up -d nginx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🔥 إعداد Firewall
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+apt install -y ufw
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw enable
+ufw status
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🔧 أوامر الإدارة اليومية
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /opt/textleaf
+
+# تشغيل
+docker-compose up -d
+
+# إيقاف
+docker-compose down
+
+# إعادة التشغيل
+docker-compose restart
+
+# عرض الحالة
+docker-compose ps
+
+# عرض السجلات
+docker-compose logs -f
+
+# عرض آخر 100 سطر
+docker-compose logs --tail=100
+
+# تحديث الكود
+git pull
+docker-compose build
+docker-compose up -d
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🆘 استكشاف الأخطاء
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# عرض سجلات الأخطاء
+docker-compose logs textleaf
+
+# إعادة بناء بدون cache
+docker-compose build --no-cache
+
+# تنظيف Docker
+docker system prune -a -f
+
+# حذف الملفات المؤقتة
+rm -rf /opt/textleaf/output/*.mp4
+rm -rf /opt/textleaf/uploads/*
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📊 المراقبة
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# استخدام الموارد
+docker stats
+
+# حجم الصور والـ volumes
+docker system df
+
+# حالة الـ containers
+docker ps -a
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📝 ملاحظات مهمة
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  استبدل YOUR_SERVER_IP باسم/IP السيرفر الخاص بك
+⚠️  استبدل YOUR_DOMAIN.com باسم النطاق الخاص بك
+⚠️  لا تنسى تعديل ملف .env بإعداداتك الحقيقية
+⚠️  احتفظ بنسخة احتياطية من ملف .env
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📞 الدعم
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WhatsApp: +963 958 917 677
+
+التوثيق الكامل:
+- /opt/textleaf/DOCKER_DEPLOY.md
+- /opt/textleaf/DOCKER_QUICK.md
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+✅ Checklist قبل الإطلاق
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ تم تعديل .env بالإعدادات الصحيحة
+□ تم إضافة SSL certificate
+□ تم تفعيل Firewall
+□ تم اختبار التطبيق (http://YOUR_DOMAIN.com)
+□ تم إعداد النسخ الاحتياطي التلقائي
+□ تم إعداد التجديد التلقائي لـ SSL
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🎉 التطبيق جاهز!
+
+الوصول:
+- HTTP:  http://YOUR_DOMAIN.com
+- HTTPS: https://YOUR_DOMAIN.com
+
+
+TextLeaf - Match Cut Video Generator
+Powered by Docker 🐳
+
